@@ -143,7 +143,9 @@ class _PostCardState extends ConsumerState<PostCard>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkSurface.withOpacity(0.7) : Colors.white.withOpacity(0.85),
+        color: isDark
+            ? AppTheme.darkSurface.withOpacity(0.85)
+            : Colors.white.withOpacity(0.92),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
           color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
@@ -159,23 +161,20 @@ class _PostCardState extends ConsumerState<PostCard>
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(isDark, displayName, displayAvatar),
-              if (widget.post.caption.isNotEmpty && widget.post.caption != widget.post.mood)
-                _buildCaption(isDark),
-              if (widget.post.imageUrl != null) _buildImage(),
-              if (widget.post.imageUrl == null && widget.post.mood != null &&
-                  (widget.post.caption.isEmpty || widget.post.caption == widget.post.mood))
-                _buildMoodHero(isDark),
-              _buildActions(isDark),
-              if (widget.post.commentCount > 0)
-                _buildRecentComment(isDark),
-            ],
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(isDark, displayName, displayAvatar),
+            if (widget.post.caption.isNotEmpty && widget.post.caption != widget.post.mood)
+              _buildCaption(isDark),
+            if (widget.post.imageUrl != null) _buildImage(),
+            if (widget.post.imageUrl == null && widget.post.mood != null &&
+                (widget.post.caption.isEmpty || widget.post.caption == widget.post.mood))
+              _buildMoodHero(isDark),
+            _buildActions(isDark),
+            if (widget.post.commentCount > 0)
+              _buildRecentComment(isDark),
+          ],
         ),
       ),
     );
@@ -392,45 +391,42 @@ class _PostCardState extends ConsumerState<PostCard>
               right: 22,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(24),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.35),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.2),
-                        width: 0.8,
-                      ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.65),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.2),
+                      width: 0.8,
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.music_note, color: Colors.white, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                widget.post.musicTrack!,
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                widget.post.musicArtist ?? '',
-                                style: const TextStyle(color: Colors.white70, fontSize: 11),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.music_note, color: Colors.white, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.post.musicTrack!,
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              widget.post.musicArtist ?? '',
+                              style: const TextStyle(color: Colors.white70, fontSize: 11),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                        const Text('🎵', style: TextStyle(fontSize: 16)),
-                      ],
-                    ),
+                      ),
+                      const Text('🎵', style: TextStyle(fontSize: 16)),
+                    ],
                   ),
                 ),
               ),
