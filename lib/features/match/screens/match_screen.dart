@@ -34,7 +34,7 @@ class _MatchScreenState extends ConsumerState<MatchScreen> {
         : communities.where((c) => c.createdBy == currentUser.id).toList();
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBg : const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? AppTheme.darkBg : AppTheme.lightBg,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -111,42 +111,62 @@ class _MatchScreenState extends ConsumerState<MatchScreen> {
   }
 
   Widget _buildHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+      padding: const EdgeInsets.fromLTRB(20, 20, 16, 8),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Discover 💫',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -1,
+                ShaderMask(
+                  shaderCallback: (b) => AppTheme.primaryGradient.createShader(b),
+                  child: const Text(
+                    'Discover 💫',
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: -1,
+                    ),
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   'Find your perfect vibe today',
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppTheme.textSecondary,
-                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white60 : AppTheme.textSecondary,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
-          IconButton(
-            onPressed: () => _showFilters(),
-            icon: Container(
+          GestureDetector(
+            onTap: () => _showFilters(),
+            child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(14),
+                color: isDark
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.white.withOpacity(0.85),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.12)
+                      : Colors.black.withOpacity(0.07),
+                  width: 1.0,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryBlue.withOpacity(0.1),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: const Icon(Icons.tune_rounded, color: AppTheme.primaryBlue, size: 22),
             ),
@@ -163,19 +183,27 @@ class _MatchScreenState extends ConsumerState<MatchScreen> {
     required Color titleColor,
     Widget? trailing,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
       child: Row(
         children: [
-          Icon(icon, color: iconColor, size: 26),
-          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               title,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w900,
-                color: titleColor,
+                color: isDark ? Colors.white : AppTheme.textPrimary,
                 letterSpacing: -0.5,
               ),
             ),
@@ -281,6 +309,7 @@ class _MatchScreenState extends ConsumerState<MatchScreen> {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => StatefulBuilder(
@@ -419,79 +448,86 @@ class _NearbyCard extends StatelessWidget {
         width: 180,
         margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 15,
-              offset: const Offset(0, 6),
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+            BoxShadow(
+              color: AppTheme.primaryBlue.withOpacity(0.08),
+              blurRadius: 30,
+              offset: const Offset(0, 12),
             ),
           ],
         ),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: Image.network(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.network(
                 user.avatarUrl ?? 'https://i.pravatar.cc/400?u=${user.id}',
                 fit: BoxFit.cover,
               ),
-            ),
-            // Gradient Overlay
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.1),
-                    Colors.black.withOpacity(0.8),
-                  ],
-                  stops: const [0.4, 0.7, 1.0],
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.06),
+                      Colors.black.withOpacity(0.82),
+                    ],
+                    stops: const [0.35, 0.65, 1.0],
+                  ),
                 ),
               ),
-            ),
-            // Content
-            Positioned(
-              bottom: 16,
-              left: 16,
-              right: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${user.name}, ${user.age}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, color: Colors.white, size: 14),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${(user.id.hashCode % 10) + 1}.${(user.id.hashCode % 9)} miles',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
+              Positioned(
+                bottom: 16,
+                left: 14,
+                right: 14,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${user.name}, ${user.age}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
                       ),
-                    ],
-                  ),
-                ],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 5),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white.withOpacity(0.25), width: 0.8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.location_on, color: Colors.white, size: 12),
+                          const SizedBox(width: 3),
+                          Text(
+                            '${(user.id.hashCode % 10) + 1}.${(user.id.hashCode % 9)} mi',
+                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -512,16 +548,20 @@ class _CommunityCard extends ConsumerWidget {
       onTap: () => context.push('/community/${community.id}'),
       child: Container(
         decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+          color: isDark ? AppTheme.darkCard.withOpacity(0.8) : Colors.white.withOpacity(0.88),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+            width: 1.0,
           ),
-        ],
-      ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.18 : 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

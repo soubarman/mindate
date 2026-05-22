@@ -211,21 +211,27 @@ class _QuickPostBoxState extends ConsumerState<QuickPostBox> {
         hasMood;
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 220),
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 6),
       decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(20),
+        color: isDark
+            ? Colors.white.withOpacity(0.06)
+            : Colors.white.withOpacity(0.88),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: _isFocused
-              ? AppTheme.accentPurple.withOpacity(0.5)
-              : (isDark ? AppTheme.darkBorder : const Color(0xFFE8EAF0)),
-          width: _isFocused ? 1.5 : 1,
+              ? AppTheme.primaryBlue.withOpacity(0.5)
+              : (isDark
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.06)),
+          width: _isFocused ? 1.5 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
-            blurRadius: 16,
+            color: _isFocused
+                ? AppTheme.primaryBlue.withOpacity(0.12)
+                : Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+            blurRadius: _isFocused ? 20 : 14,
             offset: const Offset(0, 4),
           ),
         ],

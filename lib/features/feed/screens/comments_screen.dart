@@ -62,6 +62,180 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
     });
   }
 
+  void _submitStickerComment(String stickerUrl) {
+    final currentUser = ref.read(currentUserProvider);
+    final comment = CommentModel(
+      id: 'c_${DateTime.now().millisecondsSinceEpoch}',
+      postId: widget.postId,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userAvatar: currentUser.avatarUrl,
+      text: stickerUrl,
+      createdAt: DateTime.now(),
+    );
+
+    ref.read(commentsProvider(widget.postId).notifier).addComment(comment);
+    ref.read(postsProvider.notifier).incrementCommentCount(widget.postId);
+
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _showStickerPicker() {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final List<Map<String, dynamic>> stickerPacks = [
+          {
+            'category': 'Vibing',
+            'stickers': [
+              'https://media.giphy.com/media/GeimqsH0TLDt4tScGw/giphy.gif',
+              'https://media.giphy.com/media/13CoXDiaCcC2EA/giphy.gif',
+              'https://media.giphy.com/media/zcCGB01oHmGBW/giphy.gif',
+            ]
+          },
+          {
+            'category': 'Feeling it',
+            'stickers': [
+              'https://media.giphy.com/media/l3q2zVr6cu95nF6O4/giphy.gif',
+              'https://media.giphy.com/media/kyLYXonQpkUsCxZIKH/giphy.gif',
+              'https://media.giphy.com/media/26hpK0lWh5usxL7cQ/giphy.gif',
+            ]
+          },
+          {
+            'category': 'Same Energy',
+            'stickers': [
+              'https://media.giphy.com/media/3oEjHV0z8S7EgXXRGU/giphy.gif',
+              'https://media.giphy.com/media/l41YcMcc6t7wT2Psc/giphy.gif',
+              'https://media.giphy.com/media/3o7TKoWXm3okO1kgHC/giphy.gif',
+            ]
+          },
+          {
+            'category': 'Playful',
+            'stickers': [
+              'https://media.giphy.com/media/j3gsTkbBoFiwDf4oav/giphy.gif',
+              'https://media.giphy.com/media/26tOZ42cXxDTdFlq8/giphy.gif',
+              'https://media.giphy.com/media/hVTouqNmqhMmI/giphy.gif',
+            ]
+          },
+          {
+            'category': 'Supportive',
+            'stickers': [
+              'https://media.giphy.com/media/5Govl69wYb6g0/giphy.gif',
+              'https://media.giphy.com/media/nbvFV5wGKVYu4/giphy.gif',
+              'https://media.giphy.com/media/l0ExhcMhm6t7r56XC/giphy.gif',
+            ]
+          },
+          {
+            'category': 'Curious',
+            'stickers': [
+              'https://media.giphy.com/media/3o7bu3XilJ5BOiSGic/giphy.gif',
+              'https://media.giphy.com/media/cJMmZA5XY451m/giphy.gif',
+              'https://media.giphy.com/media/26n6WywJyhXMG4skM/giphy.gif',
+            ]
+          },
+        ];
+
+        return DefaultTabController(
+          length: stickerPacks.length,
+          child: Container(
+            height: 380,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AppTheme.darkSurface : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const Text(
+                  'Sticker Picker',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 12),
+                TabBar(
+                  isScrollable: true,
+                  indicatorColor: AppTheme.primaryBlue,
+                  labelColor: AppTheme.primaryBlue,
+                  unselectedLabelColor: isDark ? Colors.white60 : Colors.black54,
+                  tabs: stickerPacks.map((pack) {
+                    return Tab(text: pack['category'] as String);
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: TabBarView(
+                    children: stickerPacks.map((pack) {
+                      final stickers = pack['stickers'] as List<String>;
+                      return GridView.builder(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: 1,
+                        ),
+                        itemCount: stickers.length,
+                        itemBuilder: (context, index) {
+                          final url = stickers[index];
+                          return GestureDetector(
+                            onTap: () {
+                              _submitStickerComment(url);
+                              Navigator.pop(context);
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                color: (isDark ? Colors.white : Colors.black).withOpacity(0.03),
+                                child: Image.network(
+                                  url,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (context, child, progress) {
+                                    if (progress == null) return child;
+                                    return const Center(
+                                      child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -94,7 +268,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                 const Spacer(),
                 Text(
                   '${comments.length}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppTheme.primaryBlue,
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
@@ -166,7 +340,12 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                       currentUser.avatarUrl ?? 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(currentUser.name)}&size=100&background=6ECBF5&color=fff&rounded=true',
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _showStickerPicker,
+                    child: const Text('🏷️', style: TextStyle(fontSize: 22)),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -194,7 +373,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                     child: Container(
                       width: 38,
                       height: 38,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         gradient: AppTheme.primaryGradient,
                         shape: BoxShape.circle,
                       ),
@@ -289,7 +468,30 @@ class _CommentTile extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 3),
-                Text(comment.text, style: const TextStyle(fontSize: 14, height: 1.4)),
+                comment.text.startsWith('http')
+                    ? Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        constraints: const BoxConstraints(maxWidth: 120, maxHeight: 120),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            comment.text,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, progress) {
+                              if (progress == null) return child;
+                              return const Center(
+                                child: SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, err, stack) => const Text('[Sticker Error]'),
+                          ),
+                        ),
+                      )
+                    : Text(comment.text, style: const TextStyle(fontSize: 14, height: 1.4)),
               ],
             ),
           ),

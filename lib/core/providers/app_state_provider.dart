@@ -258,6 +258,98 @@ class PostsNotifier extends StateNotifier<List<PostModel>> {
       debugPrint('Failed to delete post: $e');
     }
   }
+
+  Future<void> editPost(
+    String postId, {
+    required String caption,
+    String? mood,
+    String? imageUrl,
+    String? musicTrack,
+    String? musicArtist,
+  }) async {
+    state = state.map((p) {
+      if (p.id == postId) {
+        return p.copyWith(
+          caption: caption,
+          mood: mood,
+          imageUrl: imageUrl,
+          musicTrack: musicTrack,
+          musicArtist: musicArtist,
+          isEdited: true,
+        );
+      }
+      return p;
+    }).toList();
+
+    try {
+      await firestoreProvider.collection('posts').doc(postId).update({
+        'caption': caption,
+        'mood': mood,
+        'imageUrl': imageUrl,
+        'musicTrack': musicTrack,
+        'musicArtist': musicArtist,
+        'isEdited': true,
+      });
+    } catch (e) {
+      debugPrint('Failed to edit post: $e');
+    }
+  }
+
+  Future<void> togglePinPost(String postId, bool pinState) async {
+    String? userId;
+    for (var p in state) {
+      if (p.id == postId) {
+        userId = p.userId;
+        break;
+      }
+    }
+
+    if (pinState && userId != null) {
+      // Unpin all other posts locally for this user
+      state = state.map((p) {
+        if (p.userId == userId && p.id != postId && p.isPinned) {
+          // Unpin in Firestore in background
+          firestoreProvider.collection('posts').doc(p.id).update({'isPinned': false}).catchError((e) {
+            debugPrint('Failed to unpin other post: $e');
+          });
+          return p.copyWith(isPinned: false);
+        }
+        return p;
+      }).toList();
+    }
+
+    state = state.map((p) {
+      if (p.id == postId) {
+        return p.copyWith(isPinned: pinState);
+      }
+      return p;
+    }).toList();
+
+    try {
+      await firestoreProvider.collection('posts').doc(postId).update({
+        'isPinned': pinState,
+      });
+    } catch (e) {
+      debugPrint('Failed to toggle pin post: $e');
+    }
+  }
+
+  Future<void> updatePostPrivacy(String postId, String privacy) async {
+    state = state.map((p) {
+      if (p.id == postId) {
+        return p.copyWith(privacy: privacy);
+      }
+      return p;
+    }).toList();
+
+    try {
+      await firestoreProvider.collection('posts').doc(postId).update({
+        'privacy': privacy,
+      });
+    } catch (e) {
+      debugPrint('Failed to update post privacy: $e');
+    }
+  }
 }
 
 final postsProvider = StateNotifierProvider<PostsNotifier, List<PostModel>>(
@@ -524,6 +616,10 @@ final filteredPostsProvider = Provider<List<PostModel>>((ref) {
     return true;
   }).toList();
 
+  // Exclude hidden posts
+  final hiddenIds = ref.watch(hiddenPostsProvider);
+  result = result.where((p) => !hiddenIds.contains(p.id)).toList();
+
   final filter = ref.watch(feedFilterProvider);
 
   // Second level filter: Tab specific rules
@@ -551,7 +647,7 @@ final filteredPostsProvider = Provider<List<PostModel>>((ref) {
       return b.createdAt.compareTo(a.createdAt); // Secondary tie-breaker by date
     });
   } else {
-    // Always newest-first for other feeds
+    // Always newest-first for other feeds (pinned posts only float inside user profiles)
     result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
@@ -1083,3 +1179,6 @@ Future<void> markAllNotificationsAsRead(String userId) async {
   }
   await batch.commit();
 }
+
+final hiddenPostsProvider = StateProvider<List<String>>((ref) => []);
+

@@ -548,6 +548,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
         padding: const EdgeInsets.all(20),

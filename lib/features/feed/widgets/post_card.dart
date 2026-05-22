@@ -198,6 +198,39 @@ class _PostCardState extends ConsumerState<PostCard>
                       const SizedBox(width: 4),
                       const Icon(Icons.verified, color: AppTheme.primaryBlue, size: 14),
                     ],
+                    if (widget.post.isPinned) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.primaryGradient,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryBlue.withOpacity(0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1.5),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.push_pin, size: 8, color: Colors.white),
+                            SizedBox(width: 2),
+                            Text(
+                              'PINNED',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     if (widget.post.communityId != null && widget.post.communityName != null) ...[
                       const SizedBox(width: 6),
                       Icon(Icons.play_arrow_rounded, size: 12, color: isDark ? Colors.white30 : Colors.black38),
@@ -244,15 +277,57 @@ class _PostCardState extends ConsumerState<PostCard>
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Post deleted')),
                 );
+              } else if (value == 'pin') {
+                ref.read(postsProvider.notifier).togglePinPost(widget.post.id, true);
+                HapticFeedback.lightImpact();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Post pinned successfully!'),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: AppTheme.primaryBlue,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                );
+              } else if (value == 'unpin') {
+                ref.read(postsProvider.notifier).togglePinPost(widget.post.id, false);
+                HapticFeedback.lightImpact();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Post unpinned successfully!'),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: AppTheme.primaryBlue,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                );
               }
             },
             itemBuilder: (context) => [
-              if (widget.post.userId == _currentUserId)
+              if (widget.post.userId == _currentUserId) ...[
+                PopupMenuItem(
+                  value: widget.post.isPinned ? 'unpin' : 'pin',
+                  child: Row(
+                    children: [
+                      Icon(
+                        widget.post.isPinned ? Icons.pin_drop_outlined : Icons.push_pin_outlined,
+                        size: 18,
+                        color: isDark ? Colors.white70 : Colors.black87,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(widget.post.isPinned ? 'Unpin Post' : 'Pin Post'),
+                    ],
+                  ),
+                ),
                 const PopupMenuItem(
                   value: 'delete',
-                  child: Text('Delete Post', style: TextStyle(color: Colors.red)),
-                )
-              else ...[
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red),
+                      const SizedBox(width: 8),
+                      Text('Delete Post', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ] else ...[
                 const PopupMenuItem(
                   value: 'report',
                   child: Text('Report Post'),

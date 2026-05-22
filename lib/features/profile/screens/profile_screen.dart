@@ -11,6 +11,7 @@ import '../../../core/utils/seeder.dart';
 import '../../../core/providers/firebase_auth_provider.dart';
 import '../../feed/screens/comments_screen.dart';
 import '../../feed/widgets/post_card.dart';
+import '../../feed/screens/saved_posts_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -187,7 +188,12 @@ class ProfileScreen extends ConsumerWidget {
         seenIds.add(p.id);
       }
     }
-    posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    // Sort posts: float pinned posts to the top, and sort by date descending secondary
+    posts.sort((a, b) {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return b.createdAt.compareTo(a.createdAt);
+    });
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -206,11 +212,11 @@ class ProfileScreen extends ConsumerWidget {
                 _buildStats(user, posts.length, context, isDark),
                 _buildBio(user, context),
                 _buildInterests(user, context),
-                _buildGridHeader(context),
+                _buildPostsHeader(context, posts.length, isDark),
               ],
             ),
           ),
-          _buildPostsGrid(posts, context, isDark, ref),
+          _buildPostsList(posts, isDark, ref),
           const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
         ],
       ),
@@ -338,6 +344,7 @@ class ProfileScreen extends ConsumerWidget {
   void _showSettingsSheet(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (_) => _SettingsSheet(ref: ref),
@@ -456,277 +463,96 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildGridHeader(BuildContext context) {
+  Widget _buildPostsHeader(BuildContext context, int count, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+      padding: const EdgeInsets.fromLTRB(20, 28, 20, 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Gallery', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-          Icon(Icons.grid_view_rounded, size: 22, color: AppTheme.textSecondary),
+          ShaderMask(
+            shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+            child: const Icon(Icons.grid_view_rounded, size: 22, color: Colors.white),
+          ),
+          const SizedBox(width: 10),
+          const Text(
+            'My Posts',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.3),
+          ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withOpacity(0.08) : AppTheme.primaryBlue.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '$count posts',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.primaryBlue,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  SliverPadding _buildPostsGrid(
+  SliverList _buildPostsList(
     List<PostModel> posts,
-    BuildContext context,
     bool isDark,
     WidgetRef ref,
   ) {
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          childAspectRatio: 1,
-        ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final post = posts[index];
-            return GestureDetector(
-              onTap: () => _showPostDetail(context, post, posts),
-              child: Hero(
-                tag: 'post_${post.id}',
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(isDark ? 0.35 : 0.08),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
-                          Image.network(
-                            post.imageUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              color: isDark ? AppTheme.darkCard : Colors.grey[200],
-                              child: const Center(
-                                child: Icon(Icons.broken_image_rounded, color: AppTheme.textSecondary, size: 28),
-                              ),
-                            ),
-                          )
-                        else if (post.mood != null)
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  AppTheme.primaryBlue.withOpacity(isDark ? 0.25 : 0.12),
-                                  AppTheme.primaryGreen.withOpacity(isDark ? 0.25 : 0.12),
-                                ],
-                              ),
-                            ),
-                            child: Center(
-                              child: _buildEmojiImage(post.mood!.split(' ').first, size: 40),
-                            ),
-                          )
-                        else
-                          Container(
-                            color: isDark ? AppTheme.darkCard : const Color(0xFFF3F6FF),
-                            child: const Center(child: Text('✨', style: TextStyle(fontSize: 40))),
-                          ),
-
-                        // Vignette bottom gradient
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withOpacity(0.15),
-                                Colors.black.withOpacity(0.65),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Stats counters row
-                        Positioned(
-                          bottom: 8,
-                          left: 8,
-                          right: 8,
-                          child: Row(
-                            children: [
-                              Icon(Icons.favorite_rounded, color: Colors.white.withOpacity(0.9), size: 12),
-                              const SizedBox(width: 3),
-                              Text(
-                                '${post.likes.length}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              if (post.commentCount > 0) ...[
-                                const SizedBox(width: 8),
-                                Icon(Icons.chat_bubble_rounded, color: Colors.white.withOpacity(0.9), size: 10),
-                                const SizedBox(width: 3),
-                                Text(
-                                  '${post.commentCount}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ],
-                              const Spacer(),
-                              if (post.isReel)
-                                const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 14),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+    if (posts.isEmpty) {
+      return SliverList(
+        delegate: SliverChildListDelegate([
+          Container(
+            margin: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06),
+              ),
+            ),
+            child: Column(
+              children: [
+                const Text('✨', style: TextStyle(fontSize: 48)),
+                const SizedBox(height: 16),
+                Text(
+                  'No posts yet',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
-              ),
-            );
-          },
-          childCount: posts.length,
-        ),
-      ),
-    );
-  }
-
-  void _showPostDetail(BuildContext context, PostModel post, List<PostModel> allPosts) {
-    final initialIndex = allPosts.indexWhere((p) => p.id == post.id);
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      useSafeArea: true,
-      builder: (_) => _ProfilePostsScrollSheet(
-        posts: allPosts,
-        initialIndex: initialIndex >= 0 ? initialIndex : 0,
-      ),
-    );
-  }
-}
-
-// ─── Premium Scrollable Profile Posts Sheet ───────────────────────────────────
-
-class _ProfilePostsScrollSheet extends ConsumerStatefulWidget {
-  final List<PostModel> posts;
-  final int initialIndex;
-
-  const _ProfilePostsScrollSheet({
-    required this.posts,
-    required this.initialIndex,
-  });
-
-  @override
-  ConsumerState<_ProfilePostsScrollSheet> createState() => _ProfilePostsScrollSheetState();
-}
-
-class _ProfilePostsScrollSheetState extends ConsumerState<_ProfilePostsScrollSheet> {
-  late ScrollController _scrollController;
-
-  @override
-  void initState() {
-    super.initState();
-    // Estimate 540px height per post card to jump directly to the target post on load
-    const double estimateHeight = 540.0;
-    _scrollController = ScrollController(
-      initialScrollOffset: widget.initialIndex * estimateHeight,
-    );
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currentUser = ref.watch(currentUserProvider);
-
-    return DraggableScrollableSheet(
-      initialChildSize: 0.95,
-      minChildSize: 0.5,
-      maxChildSize: 0.98,
-      builder: (context, sheetScrollController) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppTheme.darkBg : const Color(0xFFF8FAFC),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Column(
-          children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white24 : Colors.black12,
-                borderRadius: BorderRadius.circular(10),
-              ),
+                const SizedBox(height: 8),
+                Text(
+                  'Share your first vibe with the world!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Spacer(),
-                  Text(
-                    'Posts',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                  const Spacer(),
-                  const SizedBox(width: 48), // balance back button space
-                ],
-              ),
-            ),
-            const Divider(height: 1, thickness: 0.5),
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.only(bottom: 80),
-                itemCount: widget.posts.length,
-                itemBuilder: (context, index) {
-                  final post = widget.posts[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: PostCard(
-                      key: ValueKey(post.id),
-                      post: post,
-                      onLike: () {
-                        ref
-                            .read(postsProvider.notifier)
-                            .toggleLike(post.id, currentUser.id);
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+          ),
+        ]),
+      );
+    }
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final post = posts[index];
+          final currentUser = ref.read(currentUserProvider);
+          return PostCard(
+            key: ValueKey(post.id),
+            post: post,
+            onLike: () => ref.read(postsProvider.notifier).toggleLike(post.id, currentUser.id),
+          );
+        },
+        childCount: posts.length,
       ),
     );
   }
@@ -821,6 +647,23 @@ class _SettingsSheet extends StatelessWidget {
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          // Saved Posts (Bookmarks)
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            tileColor: isDark ? AppTheme.darkCard : const Color(0xFFF3F6FF),
+            leading: const Icon(Icons.bookmark_outline, color: AppTheme.primaryBlue),
+            title: const Text('Saved Posts', style: TextStyle(fontWeight: FontWeight.w600)),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SavedPostsScreen()),
               );
             },
           ),

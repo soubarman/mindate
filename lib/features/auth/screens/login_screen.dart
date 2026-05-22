@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -132,36 +133,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // Background orb top-right
+          // Background gradient orb top-right
           Positioned(
-            top: -80,
-            right: -80,
+            top: -100,
+            right: -100,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 320,
+              height: 320,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppTheme.primaryBlue.withOpacity(0.3),
+                    AppTheme.primaryBlue.withOpacity(0.35),
                     Colors.transparent,
                   ],
                 ),
               ),
             ),
           ),
-          // Background orb bottom-left
+          // Background gradient orb bottom-left
           Positioned(
-            bottom: -100,
-            left: -100,
+            bottom: -120,
+            left: -120,
             child: Container(
-              width: 350,
-              height: 350,
+              width: 380,
+              height: 380,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppTheme.primaryGreen.withOpacity(0.25),
+                    AppTheme.primaryGreen.withOpacity(0.28),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Accent orb mid-left
+          Positioned(
+            top: 200,
+            left: -60,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppTheme.accentPurple.withOpacity(0.18),
                     Colors.transparent,
                   ],
                 ),
@@ -243,74 +262,96 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   Widget _buildForm() {
-    return Column(
-      children: [
-        TextField(
-          controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(
-            hintText: 'Email address',
-            prefixIcon: Icon(Icons.email_outlined, color: AppTheme.primaryBlue, size: 20),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withOpacity(0.06)
+                : Colors.white.withOpacity(0.75),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.white.withOpacity(0.9),
+              width: 1.0,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _passwordController,
-          obscureText: _obscurePassword,
-          decoration: InputDecoration(
-            hintText: 'Password',
-            prefixIcon: Icon(Icons.lock_outline_rounded, color: AppTheme.primaryBlue, size: 20),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                color: AppTheme.textTertiary,
-                size: 20,
+          child: Column(
+            children: [
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  hintText: 'Email address',
+                  prefixIcon: Icon(Icons.email_outlined, color: AppTheme.primaryBlue, size: 20),
+                ),
               ),
-              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-            ),
-          ),
-        ),
-        if (_errorMessage != null) ...[
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppTheme.error.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.error.withOpacity(0.3)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 16),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(color: AppTheme.error, fontSize: 13),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                decoration: InputDecoration(
+                  hintText: 'Password',
+                  prefixIcon: Icon(Icons.lock_outline_rounded, color: AppTheme.primaryBlue, size: 20),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: AppTheme.textTertiary,
+                      size: 20,
+                    ),
+                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  ),
+                ),
+              ),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.error.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.error.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: TextStyle(color: AppTheme.error, fontSize: 13),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-        const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: _forgotPassword,
-            child: Text(
-              'Forgot password?',
-              style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w600),
-            ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: _forgotPassword,
+                  child: Text(
+                    'Forgot password?',
+                    style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              GradientButton(
+                text: 'Sign In',
+                isLoading: _isLoading,
+                onPressed: _login,
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
-        GradientButton(
-          text: 'Sign In',
-          isLoading: _isLoading,
-          onPressed: _login,
-        ),
-      ],
+      ),
     );
   }
 

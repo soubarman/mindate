@@ -18,6 +18,13 @@ class PostModel {
   final Map<String, String> reactions; // userId -> emoji
   final String? communityId;
   final String? communityName;
+  
+  // New Flow Fields
+  final String? musicTrack;
+  final String? musicArtist;
+  final bool isPinned;
+  final String privacy; // public, connections, private
+  final bool isEdited;
 
   const PostModel({
     required this.id,
@@ -39,6 +46,11 @@ class PostModel {
     this.reactions = const {},
     this.communityId,
     this.communityName,
+    this.musicTrack,
+    this.musicArtist,
+    this.isPinned = false,
+    this.privacy = 'public',
+    this.isEdited = false,
   });
 
   factory PostModel.fromMap(Map<String, dynamic> map) {
@@ -66,6 +78,11 @@ class PostModel {
       reactions: Map<String, String>.from(map['reactions'] ?? {}),
       communityId: map['communityId'],
       communityName: map['communityName'],
+      musicTrack: map['musicTrack'],
+      musicArtist: map['musicArtist'],
+      isPinned: map['isPinned'] ?? false,
+      privacy: map['privacy'] ?? 'public',
+      isEdited: map['isEdited'] ?? false,
     );
   }
 
@@ -90,6 +107,11 @@ class PostModel {
       'reactions': reactions,
       'communityId': communityId,
       'communityName': communityName,
+      'musicTrack': musicTrack,
+      'musicArtist': musicArtist,
+      'isPinned': isPinned,
+      'privacy': privacy,
+      'isEdited': isEdited,
     };
   }
 
@@ -113,6 +135,11 @@ class PostModel {
     Map<String, String>? reactions,
     String? communityId,
     String? communityName,
+    String? musicTrack,
+    String? musicArtist,
+    bool? isPinned,
+    String? privacy,
+    bool? isEdited,
   }) {
     return PostModel(
       id: id ?? this.id,
@@ -134,6 +161,11 @@ class PostModel {
       reactions: reactions ?? this.reactions,
       communityId: communityId ?? this.communityId,
       communityName: communityName ?? this.communityName,
+      musicTrack: musicTrack ?? this.musicTrack,
+      musicArtist: musicArtist ?? this.musicArtist,
+      isPinned: isPinned ?? this.isPinned,
+      privacy: privacy ?? this.privacy,
+      isEdited: isEdited ?? this.isEdited,
     );
   }
 }
