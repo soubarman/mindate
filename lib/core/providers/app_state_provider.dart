@@ -296,28 +296,6 @@ class PostsNotifier extends StateNotifier<List<PostModel>> {
   }
 
   Future<void> togglePinPost(String postId, bool pinState) async {
-    String? userId;
-    for (var p in state) {
-      if (p.id == postId) {
-        userId = p.userId;
-        break;
-      }
-    }
-
-    if (pinState && userId != null) {
-      // Unpin all other posts locally for this user
-      state = state.map((p) {
-        if (p.userId == userId && p.id != postId && p.isPinned) {
-          // Unpin in Firestore in background
-          firestoreProvider.collection('posts').doc(p.id).update({'isPinned': false}).catchError((e) {
-            debugPrint('Failed to unpin other post: $e');
-          });
-          return p.copyWith(isPinned: false);
-        }
-        return p;
-      }).toList();
-    }
-
     state = state.map((p) {
       if (p.id == postId) {
         return p.copyWith(isPinned: pinState);
@@ -647,8 +625,12 @@ final filteredPostsProvider = Provider<List<PostModel>>((ref) {
       return b.createdAt.compareTo(a.createdAt); // Secondary tie-breaker by date
     });
   } else {
-    // Always newest-first for other feeds (pinned posts only float inside user profiles)
-    result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    // Always newest-first for other feeds, but float pinned posts to the very top!
+    result.sort((a, b) {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return b.createdAt.compareTo(a.createdAt);
+    });
   }
 
   return result;

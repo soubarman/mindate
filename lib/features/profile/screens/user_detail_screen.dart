@@ -1102,12 +1102,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
         seenIds.add(p.id);
       }
     }
-    // Sort posts: float pinned posts to the top, and sort by date descending secondary
-    posts.sort((a, b) {
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-      return b.createdAt.compareTo(a.createdAt);
-    });
+    posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     if (posts.isEmpty) {
       return Container(
